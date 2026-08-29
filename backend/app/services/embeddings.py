@@ -149,6 +149,17 @@ class LocalEmbeddingProvider(EmbeddingProvider):
         return (await self._encode([text]))[0]
 
 
+#: Very common words carry no retrieval signal, and at low dimensionality they
+#: dominate the hashed vector - "what was X in 2024" would otherwise match any
+#: sentence containing "was" and "2024". Real embedding models learn to discount
+#: them; the hashing trick has to be told.
+_STOPWORDS = frozenset(
+    """a an and are as at be been by did do does for from has have how i in is it
+    its much not of on or that the this to was were what when where which who with
+    you your""".split()
+)
+
+
 class FakeEmbeddingProvider(EmbeddingProvider):
     """Hashed bag-of-words embeddings: deterministic, offline, dependency-free.
 
@@ -158,6 +169,7 @@ class FakeEmbeddingProvider(EmbeddingProvider):
     """
 
     name = "fake"
+    TRIGRAM_WEIGHT = 0.25
 
     def __init__(self, dimension: int) -> None:
         self.dimension = dimension
@@ -165,10 +177,13 @@ class FakeEmbeddingProvider(EmbeddingProvider):
     def _vector(self, text: str) -> list[float]:
         vector = [0.0] * self.dimension
         tokens = re.findall(r"[a-z0-9]+", text.lower())
-        for token in tokens:
+        content_tokens = [t for t in tokens if t not in _STOPWORDS]
+        # Fall back to the raw tokens rather than emitting a zero vector for
+        # input that is nothing but stopwords.
+        for token in content_tokens or tokens:
             self._add(vector, token, 1.0)
             for i in range(len(token) - 2):
-                self._add(vector, token[i : i + 3], 0.25)
+                self._add(vector, token[i : i + 3], self.TRIGRAM_WEIGHT)
         return l2_normalise(vector)
 
     def _add(self, vector: list[float], key: str, weight: float) -> None:

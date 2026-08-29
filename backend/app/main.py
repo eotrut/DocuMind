@@ -24,6 +24,16 @@ logger = logging.getLogger("documind")
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     settings.validate_embedding_dim()
+    if settings.jwt_secret == "change-me-in-production" or len(settings.jwt_secret) < 32:
+        logger.warning(
+            "JWT_SECRET is weak or left at its default. Generate one with: "
+            'python -c "import secrets; print(secrets.token_urlsafe(48))"'
+        )
+    if not settings.gemini_api_key:
+        logger.warning(
+            "GEMINI_API_KEY is not set - uploads and chat will fail until it is. "
+            "Get a free key at https://aistudio.google.com/app/apikey"
+        )
     await init_models()
     logger.info(
         "DocuMind API ready (db=%s, embeddings=%s/%dd, model=%s)",

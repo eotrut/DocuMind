@@ -1,0 +1,31 @@
+[project]
+name = "documind-backend"
+version = "1.0.0"
+description = "FastAPI backend for DocuMind - RAG document chat with citations"
+requires-python = ">=3.11"
+# Runtime dependencies are pinned in requirements.txt (and requirements-dev.txt),
+# which is what both the Dockerfile and CI install.
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning:pypdf.*",
+]
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = ["B008"]  # FastAPI's Depends()/File() defaults are the idiom here
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
