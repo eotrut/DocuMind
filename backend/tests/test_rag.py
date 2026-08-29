@@ -83,3 +83,22 @@ def test_history_is_capped_and_roles_are_mapped_to_gemini_names():
 
 def test_blank_history_turns_are_dropped():
     assert rag._history_contents([("user", "   ")]) == []
+
+
+def test_stale_citation_markers_are_stripped_from_replayed_assistant_turns():
+    contents = rag._history_contents(
+        [("assistant", "Revenue grew 14% [2] and margins improved [1].")]
+    )
+
+    text = contents[0].parts[0].text
+    assert "[2]" not in text and "[1]" not in text
+    assert "Revenue grew 14%" in text
+
+
+def test_markers_in_the_users_own_question_are_left_alone():
+    contents = rag._history_contents([("user", "What did source [2] say?")])
+    assert contents[0].parts[0].text == "What did source [2] say?"
+
+
+def test_an_assistant_turn_that_is_only_markers_is_dropped():
+    assert rag._history_contents([("assistant", "[1][2]")]) == []

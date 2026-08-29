@@ -8,7 +8,7 @@ the page, and the chunk the model actually read.
 
 It is built to be read as well as run: a typed FastAPI backend with a pluggable
 embedding layer, pgvector for similarity search, streaming responses over SSE,
-and a 73-test suite that runs without Docker, a database server, or an API key.
+and an 84-test suite that runs without Docker, a database server, or an API key.
 
 ```
 Next.js 14 · TypeScript · Tailwind  ·  FastAPI · SQLAlchemy 2 (async) · pgvector
@@ -310,7 +310,7 @@ Gemini key.
 ```bash
 cd backend
 pip install -r requirements-dev.txt
-python -m pytest              # 73 tests, ~15s, no Docker / DB / API key needed
+python -m pytest              # 84 tests, ~15s, no Docker / DB / API key needed
 ```
 
 The suite uses a throwaway SQLite file and the deterministic `fake` embedding
@@ -328,6 +328,7 @@ resolution, SSE framing and persistence all exercised for real.
 | `test_chat_api.py` | Full SSE protocol, citation resolution and persistence, follow-ups, document filtering, empty query, auth. |
 | `test_rag.py` | Prompt assembly, snippet truncation, marker de-duplication, discarding hallucinated markers. |
 | `test_gemini_retry.py` | Backoff growth, `retryDelay` hint, 429 → `RateLimitedError`, non-retryable 4xx, missing key. |
+| `test_postgres_dialect.py` | Compiles the pgvector query and DDL against the PostgreSQL dialect — `VECTOR(n)` column rendering, the distance cast, owner scoping and expanding `IN` — so the production path is checked even though the suite runs on SQLite. |
 
 ---
 
@@ -396,7 +397,7 @@ single-service project; Alembic would be ceremony. Also listed below.
 7. **Answer-quality evaluation.** A small golden set of question/answer/expected
    -source triples scored for retrieval hit-rate and citation precision, run in
    CI, so prompt or chunking changes can be judged rather than guessed at.
-8. **Frontend tests.** The backend has 73 tests; the UI has none. Vitest for the
+8. **Frontend tests.** The backend has 84 tests; the UI has none. Vitest for the
    citation parser and a Playwright run through signup → upload → cited answer.
 9. **Observability.** Structured JSON logs, OpenTelemetry traces spanning
    retrieval and generation, and per-request token accounting.

@@ -110,15 +110,24 @@ def used_markers(answer: str, citations: Sequence[Citation]) -> list[int]:
 def _history_contents(
     history: Sequence[tuple[str, str]],
 ) -> list[genai_types.Content]:
-    """Convert stored (role, content) pairs into Gemini turns."""
+    """Convert stored (role, content) pairs into Gemini turns.
+
+    Citation markers are stripped from replayed assistant turns: their numbering
+    belonged to a previous retrieval, and leaving them in encourages the model to
+    reuse stale marker numbers in the new answer.
+    """
     contents: list[genai_types.Content] = []
     for role, content in history[-HISTORY_TURNS:]:
         if not content.strip():
             continue
+        is_assistant = role == "assistant"
+        text = CITATION_MARKER_RE.sub("", content).strip() if is_assistant else content
+        if not text:
+            continue
         contents.append(
             genai_types.Content(
-                role="model" if role == "assistant" else "user",
-                parts=[genai_types.Part.from_text(text=content)],
+                role="model" if is_assistant else "user",
+                parts=[genai_types.Part.from_text(text=text)],
             )
         )
     return contents

@@ -19,8 +19,9 @@ import logging
 from dataclasses import dataclass
 
 import numpy as np
-from sqlalchemy import select, text
+from sqlalchemy import bindparam, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import TextClause
 
 from app.models import Chunk, Document
 
@@ -48,13 +49,17 @@ def _to_pgvector_literal(vector: list[float]) -> str:
     return "[" + ",".join(f"{v:.8f}" for v in vector) + "]"
 
 
-async def _search_postgres(
-    session: AsyncSession,
+def build_postgres_statement(
     user_id: str,
     query_vector: list[float],
     top_k: int,
     document_ids: list[str] | None,
-) -> list[RetrievedChunk]:
+) -> tuple[TextClause, dict]:
+    """Build the pgvector query and its parameters.
+
+    Split out from execution so the SQL can be compiled against the PostgreSQL
+    dialect in tests without a running database.
+    """
     # `1 - cosine_distance` converts pgvector's distance into a similarity in
     # [-1, 1] so both backends report the same scale to the API.
     sql = """
@@ -77,14 +82,31 @@ async def _search_postgres(
         "user_id": user_id,
         "top_k": top_k,
     }
-    document_filter = ""
+
+    statement = text(sql.format(document_filter=""))
     if document_ids:
-        document_filter = "AND c.document_id = ANY(:document_ids)"
+        # An expanding bindparam renders `IN (:id_1, :id_2, ...)`. Preferred over
+        # `= ANY(:ids)` because asyncpg cannot infer the element type of a bare
+        # array parameter against a varchar column without an explicit cast.
+        statement = text(
+            sql.format(document_filter="AND c.document_id IN :document_ids")
+        ).bindparams(bindparam("document_ids", expanding=True))
         params["document_ids"] = list(document_ids)
 
-    result = await session.execute(
-        text(sql.format(document_filter=document_filter)), params
+    return statement, params
+
+
+async def _search_postgres(
+    session: AsyncSession,
+    user_id: str,
+    query_vector: list[float],
+    top_k: int,
+    document_ids: list[str] | None,
+) -> list[RetrievedChunk]:
+    statement, params = build_postgres_statement(
+        user_id, query_vector, top_k, document_ids
     )
+    result = await session.execute(statement, params)
     return [
         RetrievedChunk(
             chunk_id=row.chunk_id,
