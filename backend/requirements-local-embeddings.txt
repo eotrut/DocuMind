@@ -1,0 +1,5 @@
+# Optional: on-device embeddings (EMBEDDING_PROVIDER=local, EMBEDDING_DIM=384).
+# Kept out of requirements.txt because it pulls in PyTorch (~2 GB) and is only
+# needed if you would rather not spend Gemini free-tier embedding quota.
+#   pip install -r requirements-local-embeddings.txt
+sentence-transformers>=3.0,<6
