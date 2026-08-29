@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from app.schemas import Citation
 from app.services import rag
 from app.services.retrieval import RetrievedChunk
 

@@ -89,14 +89,7 @@ def build_prompt(question: str, citations: Sequence[Citation]) -> str:
         for c in citations
     ]
     sources = "\n\n".join(blocks)
-    return (
-        "SOURCES\n"
-        "=======\n"
-        f"{sources}\n\n"
-        "QUESTION\n"
-        "========\n"
-        f"{question}"
-    )
+    return f"SOURCES\n=======\n{sources}\n\nQUESTION\n========\n{question}"
 
 
 def used_markers(answer: str, citations: Sequence[Citation]) -> list[int]:

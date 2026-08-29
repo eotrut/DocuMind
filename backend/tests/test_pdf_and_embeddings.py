@@ -64,7 +64,9 @@ async def test_fake_provider_ranks_lexically_related_text_higher():
     vectors = await provider.embed_documents(documents)
     query = await provider.embed_query("how much revenue did the company make")
 
-    scores = [sum(q * d for q, d in zip(query, vector)) for vector in vectors]
+    scores = [
+        sum(q * d for q, d in zip(query, vector, strict=True)) for vector in vectors
+    ]
     assert scores[1] > scores[0]
 
 

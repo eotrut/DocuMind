@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -31,7 +31,7 @@ def _uuid() -> str:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class EmbeddingVector(TypeDecorator):
@@ -78,13 +78,15 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(320), unique=True, index=True, nullable=False
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    documents: Mapped[list["Document"]] = relationship(
+    documents: Mapped[list[Document]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
-    conversations: Mapped[list["Conversation"]] = relationship(
+    conversations: Mapped[list[Conversation]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -105,7 +107,7 @@ class Document(Base, TimestampMixin):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="documents")
-    chunks: Mapped[list["Chunk"]] = relationship(
+    chunks: Mapped[list[Chunk]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
 
@@ -149,7 +151,7 @@ class Conversation(Base, TimestampMixin):
     )
 
     user: Mapped[User] = relationship(back_populates="conversations")
-    messages: Mapped[list["Message"]] = relationship(
+    messages: Mapped[list[Message]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
         order_by="Message.created_at",

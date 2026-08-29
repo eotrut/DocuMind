@@ -9,7 +9,8 @@ from tests.factories import build_blank_pdf, build_sample_pdf
 
 
 def _pdf_upload(name: str = "annual-report.pdf", data: bytes | None = None):
-    return {"files": (name, data if data is not None else build_sample_pdf(), "application/pdf")}
+    payload = data if data is not None else build_sample_pdf()
+    return {"files": (name, payload, "application/pdf")}
 
 
 async def test_upload_indexes_a_pdf_into_chunks(auth_client, session):

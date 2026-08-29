@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -91,9 +91,7 @@ async def chat_stream(
 
     # ---- 1. Conversation bookkeeping -------------------------------------
     if payload.conversation_id:
-        conversation = await _load_conversation(
-            session, user_id, payload.conversation_id
-        )
+        conversation = await _load_conversation(session, user_id, payload.conversation_id)
     else:
         conversation = Conversation(user_id=user_id, title=_title_from(payload.message))
         session.add(conversation)
@@ -155,9 +153,7 @@ async def chat_stream(
                 collected.append(rag.NO_CONTEXT_MESSAGE)
                 yield _sse("token", {"text": rag.NO_CONTEXT_MESSAGE})
             else:
-                async for piece in rag.stream_answer(
-                    payload.message, citations, history
-                ):
+                async for piece in rag.stream_answer(payload.message, citations, history):
                     collected.append(piece)
                     yield _sse("token", {"text": piece})
         except DocuMindError as exc:
@@ -187,7 +183,7 @@ async def chat_stream(
             conversation_row = await write_session.get(Conversation, conversation_id)
             if conversation_row is not None:
                 # Touch the conversation so the sidebar sorts by recent activity.
-                conversation_row.updated_at = datetime.now(timezone.utc)
+                conversation_row.updated_at = datetime.now(UTC)
             await write_session.commit()
             message_id = assistant_message.id
 
@@ -250,9 +246,7 @@ async def get_conversation(
     )
 
 
-@router.delete(
-    "/conversations/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/conversations/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_conversation(
     conversation_id: str, user: CurrentUser, session: SessionDep
 ) -> None:

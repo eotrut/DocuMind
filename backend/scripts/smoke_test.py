@@ -164,7 +164,8 @@ async def main(base_url: str) -> None:
         cited = [c for c in citations if c["marker"] in used_markers]
         for citation in cited:
             ok(
-                f"[{citation['marker']}] -> {citation['filename']} p.{citation['page_number']} "
+                f"[{citation['marker']}] -> {citation['filename']} "
+                f"p.{citation['page_number']} "
                 f"(score {citation['score']:.3f})"
             )
 

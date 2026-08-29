@@ -107,7 +107,9 @@ async def with_retries(
             last_exc = exc
             if attempt == MAX_ATTEMPTS:
                 break
-            await asyncio.sleep(min(BASE_DELAY_SECONDS * 2 ** (attempt - 1), MAX_DELAY_SECONDS))
+            await asyncio.sleep(
+                min(BASE_DELAY_SECONDS * 2 ** (attempt - 1), MAX_DELAY_SECONDS)
+            )
 
     assert last_exc is not None
     if _is_rate_limit(last_exc):
@@ -115,7 +117,10 @@ async def with_retries(
     raise UpstreamError(f"{what} failed after {MAX_ATTEMPTS} attempts.") from last_exc
 
 
-def retryable(what: str) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+AsyncFn = Callable[..., Awaitable[T]]
+
+
+def retryable(what: str) -> Callable[[AsyncFn[T]], AsyncFn[T]]:
     """Decorator form of :func:`with_retries`."""
 
     def decorator(fn: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:

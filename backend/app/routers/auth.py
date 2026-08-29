@@ -17,9 +17,7 @@ def _normalise_email(email: str) -> str:
     return email.strip().lower()
 
 
-@router.post(
-    "/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def signup(payload: UserCreate, session: SessionDep) -> TokenResponse:
     email = _normalise_email(payload.email)
 

@@ -22,7 +22,9 @@ def test_normalise_repairs_words_hyphenated_across_line_breaks():
 
 
 def test_chunks_respect_the_size_budget():
-    page = PageText(1, " ".join(f"Sentence number {i} about revenue." for i in range(200)))
+    page = PageText(
+        1, " ".join(f"Sentence number {i} about revenue." for i in range(200))
+    )
     chunks = chunk_pages([page], chunk_size=500, chunk_overlap=80)
 
     assert len(chunks) > 1

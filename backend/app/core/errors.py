@@ -23,7 +23,9 @@ class RateLimitedError(DocuMindError):
         "and try again."
     )
 
-    def __init__(self, message: str | None = None, retry_after: int | None = None) -> None:
+    def __init__(
+        self, message: str | None = None, retry_after: int | None = None
+    ) -> None:
         super().__init__(message)
         self.retry_after = retry_after
 

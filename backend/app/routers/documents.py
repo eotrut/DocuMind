@@ -74,9 +74,7 @@ async def upload_documents(
         except DocuMindError as exc:
             await session.rollback()
             logger.info("Upload rejected for %s: %s", filename, exc.message)
-            results.append(
-                UploadResult(filename=filename, ok=False, error=exc.message)
-            )
+            results.append(UploadResult(filename=filename, ok=False, error=exc.message))
         except Exception:  # noqa: BLE001 - never fail the whole batch on one file
             await session.rollback()
             logger.exception("Unexpected error ingesting %s", filename)

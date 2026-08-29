@@ -147,9 +147,7 @@ async def test_asking_with_no_documents_answers_gracefully(auth_client):
     events = dict(parse_sse(response.text))
 
     assert events["sources"]["citations"] == []
-    answer = "".join(
-        p["text"] for name, p in parse_sse(response.text) if name == "token"
-    )
+    answer = "".join(p["text"] for name, p in parse_sse(response.text) if name == "token")
     assert answer == rag.NO_CONTEXT_MESSAGE
     assert events["done"]["used_markers"] == []
 

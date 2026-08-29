@@ -154,9 +154,49 @@ class LocalEmbeddingProvider(EmbeddingProvider):
 #: sentence containing "was" and "2024". Real embedding models learn to discount
 #: them; the hashing trick has to be told.
 _STOPWORDS = frozenset(
-    """a an and are as at be been by did do does for from has have how i in is it
-    its much not of on or that the this to was were what when where which who with
-    you your""".split()
+    [
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "been",
+        "by",
+        "did",
+        "do",
+        "does",
+        "for",
+        "from",
+        "has",
+        "have",
+        "how",
+        "i",
+        "in",
+        "is",
+        "it",
+        "its",
+        "much",
+        "not",
+        "of",
+        "on",
+        "or",
+        "that",
+        "the",
+        "this",
+        "to",
+        "was",
+        "were",
+        "what",
+        "when",
+        "where",
+        "which",
+        "who",
+        "with",
+        "you",
+        "your",
+    ]
 )
 
 
@@ -212,14 +252,13 @@ def build_provider(
     if name == "fake":
         return FakeEmbeddingProvider(dimension)
     raise ValueError(
-        f"Unknown EMBEDDING_PROVIDER {name!r}; expected one of {sorted(PROVIDER_DIMENSIONS)}"
+        f"Unknown EMBEDDING_PROVIDER {name!r}; "
+        f"expected one of {sorted(PROVIDER_DIMENSIONS)}"
     )
 
 
 @lru_cache
 def get_embedding_provider() -> EmbeddingProvider:
     provider = build_provider()
-    logger.info(
-        "Embeddings: provider=%s dimension=%d", provider.name, provider.dimension
-    )
+    logger.info("Embeddings: provider=%s dimension=%d", provider.name, provider.dimension)
     return provider

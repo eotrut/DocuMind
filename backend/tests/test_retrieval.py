@@ -38,9 +38,7 @@ async def test_search_ranks_the_relevant_chunk_first(session, embedding_provider
     )
 
     query = await embedding_provider.embed_query("what was revenue in 2024")
-    results = await search_chunks(
-        session, user_id=user.id, query_vector=query, top_k=3
-    )
+    results = await search_chunks(session, user_id=user.id, query_vector=query, top_k=3)
 
     assert results, "expected at least one hit"
     assert "4.2 million euros" in results[0].content
@@ -59,9 +57,7 @@ async def test_scores_are_sorted_descending(session, embedding_provider):
     )
 
     query = await embedding_provider.embed_query("headcount employees")
-    results = await search_chunks(
-        session, user_id=user.id, query_vector=query, top_k=3
-    )
+    results = await search_chunks(session, user_id=user.id, query_vector=query, top_k=3)
 
     scores = [r.score for r in results]
     assert scores == sorted(scores, reverse=True)
@@ -78,8 +74,10 @@ async def test_top_k_limits_the_result_set(session, embedding_provider):
     )
 
     query = await embedding_provider.embed_query("company")
-    assert len(await search_chunks(session, user_id=user.id, query_vector=query, top_k=1)) == 1
-    assert await search_chunks(session, user_id=user.id, query_vector=query, top_k=0) == []
+    top_one = await search_chunks(session, user_id=user.id, query_vector=query, top_k=1)
+    assert len(top_one) == 1
+    none = await search_chunks(session, user_id=user.id, query_vector=query, top_k=0)
+    assert none == []
 
 
 async def test_search_never_crosses_user_boundaries(session, embedding_provider):
@@ -94,7 +92,10 @@ async def test_search_never_crosses_user_boundaries(session, embedding_provider)
     )
 
     query = await embedding_provider.embed_query("what was revenue in 2024")
-    assert await search_chunks(session, user_id=intruder.id, query_vector=query, top_k=5) == []
+    leaked = await search_chunks(
+        session, user_id=intruder.id, query_vector=query, top_k=5
+    )
+    assert leaked == []
 
 
 async def test_document_filter_restricts_the_search(session, embedding_provider):
@@ -155,4 +156,5 @@ async def test_search_on_an_empty_corpus_returns_nothing(session, embedding_prov
     user = await _make_user(session, "empty@example.com")
     query = await embedding_provider.embed_query("anything at all")
 
-    assert await search_chunks(session, user_id=user.id, query_vector=query, top_k=5) == []
+    results = await search_chunks(session, user_id=user.id, query_vector=query, top_k=5)
+    assert results == []
