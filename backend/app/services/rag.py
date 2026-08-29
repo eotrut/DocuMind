@@ -162,15 +162,31 @@ async def stream_answer(
         ),
     )
 
-    async def open_stream():
-        return await client.aio.models.generate_content_stream(
+    async def open_and_prime() -> tuple[AsyncIterator, object | None]:
+        """Open the stream *and* pull its first event.
+
+        The SDK connects lazily, so a 429 or a DNS failure does not surface
+        until the first chunk is awaited. Priming inside the retry means those
+        are treated as connection failures (retried, and reported as a rate
+        limit when that is what they are) rather than as a truncated answer.
+        """
+        stream = await client.aio.models.generate_content_stream(
             model=settings.gemini_model, contents=contents, config=config
         )
+        iterator = stream.__aiter__()
+        try:
+            return iterator, await iterator.__anext__()
+        except StopAsyncIteration:
+            return iterator, None
 
-    stream = await with_retries(open_stream, what="Gemini generation")
+    iterator, first_event = await with_retries(open_and_prime, what="Gemini generation")
+
+    first_text = getattr(first_event, "text", None) if first_event else None
+    if first_text:
+        yield first_text
 
     try:
-        async for event in stream:
+        async for event in iterator:
             text = getattr(event, "text", None)
             if text:
                 yield text
