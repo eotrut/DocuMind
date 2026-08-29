@@ -162,10 +162,25 @@ the UI. Temperature is 0.2 — this is extraction, not creative writing.
 3. Click **Create API key** (you can create it in a new project).
 4. Copy the key and paste it into your `.env` as `GEMINI_API_KEY=…`.
 
-No billing details are required for the free tier. Free-tier quotas are
-per-minute and per-day, and are shared between chat and embedding calls — this
-is exactly why the backend retries with backoff and reports a clean HTTP 429 to
-the UI when quota really is exhausted.
+No billing details are required for the free tier.
+
+**Free-tier quotas are per-minute *and* per-day, and each model has its own
+bucket.** Chat and embedding quotas are counted separately too, so it is normal
+to see generation rate-limited while ingestion still works. When the backend
+exhausts its retries it reports a clean HTTP 429 and the UI shows *"The Gemini
+free tier is rate-limited right now"* rather than failing:
+
+```
+Gemini generation hit a rate limit; retrying in 20.3s (attempt 1/4)
+Gemini generation hit a rate limit; retrying in 30.4s (attempt 2/4)
+Gemini generation hit a rate limit; retrying in 28.4s (attempt 3/4)
+Chat stream ended with a handled error: The Gemini free tier is rate-limited …
+```
+
+If you burn a model's **daily** quota, the fastest fix is to point
+`GEMINI_MODEL` at a different flash model — the buckets are independent — and
+restart the backend (`docker compose up -d --force-recreate backend`). No code
+change is needed; that is the whole reason the model name is an env var.
 
 **Model names move.** `GEMINI_MODEL` and `GEMINI_EMBEDDING_MODEL` are env vars
 precisely so you never have to touch code when Google retires a model. If you
